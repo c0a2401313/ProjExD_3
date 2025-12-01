@@ -168,7 +168,13 @@ def main():
         key_lst = pg.key.get_pressed()
         bird.update(key_lst, screen)
         if beam is not None:
-            beam.update(screen)   #Beamで追加
+            beam.update(screen)
+        
+        if bomb is not None:
+            if beam is not None:
+                if beam.rct.colliderect(bomb.rct):
+                    bomb = None
+        
         bomb.update(screen)
         pg.display.update()
         tmr += 1
