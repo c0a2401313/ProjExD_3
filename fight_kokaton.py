@@ -171,8 +171,29 @@ class Score:
         screen.blit(self.img,self.rct)
 
 
+class explosion:
+    """
+    explosionクラス
+    """
+    def __init__(self, center):
+        img1 = pg.image.load("fig/explosion.gif")
+        img2 = pg.transform.flip(img1, False, True)
+        self.img = img1
+        self.imglst = [img1, img2]
+        self.life = 20
 
+        # 爆発画像用の Rect を作成して中心を設定
+        self.rct = self.img.get_rect()
+        self.rct.center = center
 
+    def update(self, screen: pg.Surface): #引数self screen
+        if self.life > 0: #lifeが０以上の時
+            if self.life % 10 >= 5:
+                self.img = self.imglst[1] #１０で割ったときの余りが５以上の時にimg2
+            else:
+                self.img = self.imglst[0]
+            screen.blit(self.img, self.rct)
+            self.life -= 1
 
 def main():
     pg.display.set_caption("たたかえ！こうかとん")
@@ -185,8 +206,9 @@ def main():
     
     beams = [] #beamの空のリスト
 
+
     score = Score() #Scoreインスタンスの生成
-    #explosions:list[Explosion] = []
+    exlst = []
     clock = pg.time.Clock()
     tmr = 0
     while True:
@@ -216,8 +238,8 @@ def main():
                     if bomb is None:
                         continue
                     if bomb.rct.colliderect(beam.rct): #ボムがビームとぶつかったら
+                        exlst.append(explosion(beam.rct.center))
                         bombs[i] = None #ボムが消える
-                        beam = None
                         beams.pop(k) #ビームも消える
                         score.add()
                         bird.change_img(6,screen)
@@ -226,10 +248,13 @@ def main():
                 beams.pop(k) #ビームが画面外で削除
         
         bombs = [bomb for bomb in bombs if bomb is not None]            
-        
         for  bomb in bombs:
             bomb.update(screen)
         
+        exlst = [ex for ex in exlst if ex.life > 0]
+        for ex in exlst:
+            ex.update(screen)
+
         score.update(screen)
         
         pg.display.update()
