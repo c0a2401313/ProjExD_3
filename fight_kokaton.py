@@ -84,6 +84,8 @@ class Bird:
         screen.blit(self.img, self.rct)
 
 
+
+
 class Beam:
     """
     こうかとんが放つビームに関するクラス
@@ -201,6 +203,7 @@ def main():
                 if beam.rct.colliderect(bomb.rct):
                     bomb = None
                     score.add()
+                    bird.change_img(6,screen)
                     #bombs = [Bomb((255, 0, 0), 10) for _ in range(NUM_OF_BOMBS)]
 
         score.update(screen)
