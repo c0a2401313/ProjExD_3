@@ -179,7 +179,7 @@ class Score:
         screen.blit(self.img,self.rct)
 
 
-class explosion:
+class Explosion:
     """
     explosionクラス
     """
@@ -250,7 +250,7 @@ def main():
             # 画面内に残っているビームだけ爆弾との当たり判定
             for bomb in bombs[:]:
                 if bomb.rct.colliderect(beam.rct):
-                    exlst.append(explosion(beam.rct.center))
+                    exlst.append(Explosion(beam.rct.center))
                     bombs.remove(bomb)   # 爆弾削除
                     beams.remove(beam)   # ビーム削除
                     score.add()
