@@ -3,7 +3,7 @@ import random
 import sys
 import time
 import pygame as pg
-
+import math
 
 WIDTH = 1100  # ゲームウィンドウの幅
 HEIGHT = 650  # ゲームウィンドウの高さ
@@ -56,6 +56,7 @@ class Bird:
         self.img = __class__.imgs[(+5, 0)]
         self.rct: pg.Rect = self.img.get_rect()
         self.rct.center = xy
+        self.dire = (+5, 0)
 
     def change_img(self, num: int, screen: pg.Surface):
         """
@@ -82,6 +83,8 @@ class Bird:
             self.rct.move_ip(-sum_mv[0], -sum_mv[1])
         if not (sum_mv[0] == 0 and sum_mv[1] == 0):
             self.img = __class__.imgs[tuple(sum_mv)]
+        if sum_mv!=[0, 0]:
+            self.dire = tuple(sum_mv)
         screen.blit(self.img, self.rct)
     
     def gameover(self,screen: pg.Surface):
@@ -105,17 +108,22 @@ class Beam:
         self.rct = self.img.get_rect()
         self.rct.centery = bird.rct.centery #こうかとんの中心縦座標
         self.rct.centerx = bird.rct.centerx #こうかとんの右座標
-        self.vx, self.vy = +5, 0
+        self.vx, self.vy = bird.dire
+        self.img = pg.transform.rotate(self.img,math.degrees(math.atan2(-self.vy,self.vx)))
+        
+
 
     def update(self, screen: pg.Surface):
         """
         ビームを速度ベクトルself.vx, self.vyに基づき移動させる
         引数 screen：画面Surface
         """
-        if check_bound(self.rct) == (True, True):
-            self.rct.move_ip(self.vx, self.vy)
-            screen.blit(self.img, self.rct)    
-
+        if check_bound(self.rct) != (True, True):
+            return False
+        screen.blit(self.img, self.rct)
+        self.rct.move_ip(self.vx, self.vy)
+        screen.blit(self.img, self.rct)    
+        return True
 
 class Bomb:
     """
@@ -131,7 +139,7 @@ class Bomb:
         pg.draw.circle(self.img, color, (rad, rad), rad)
         self.img.set_colorkey((0, 0, 0))
         self.rct = self.img.get_rect()
-        self.rct.center = random.randint(0, WIDTH), random.randint(0, HEIGHT)
+        self.rct.center = random.randint(0, WIDTH-rad), random.randint(0, HEIGHT-rad)
         self.vx, self.vy = +5, +5
         
 
@@ -200,7 +208,7 @@ def main():
     screen = pg.display.set_mode((WIDTH, HEIGHT))  
     bg_img = pg.image.load("fig/pg_bg.jpg")
     bird = Bird((300, 200))
-    #bomb = Bomb((255, 0, 0), 10)
+    
     bombs = [Bomb((255, 0, 0), 10) for k in range(NUM_OF_BOMBS)]
     #beam = None  # ゲーム初期化時にはビームは存在しない
     
@@ -220,6 +228,7 @@ def main():
                 beams.append(Beam(bird)) #ビームをアペンド       
         screen.blit(bg_img, [0, 0])
         
+
         for bomb in bombs:
             if bird.rct.colliderect(bomb.rct):
                 # ゲームオーバー時に，こうかとん画像を切り替え，1秒間表示させる
@@ -231,21 +240,22 @@ def main():
 
         key_lst = pg.key.get_pressed()
         bird.update(key_lst, screen)
-        for k, beam in enumerate(beams):
-            if beam is not screen: 
-                beam.update(screen)
-                for i, bomb in enumerate(bombs): 
-                    if bomb is None:
-                        continue
-                    if bomb.rct.colliderect(beam.rct): #ボムがビームとぶつかったら
-                        exlst.append(explosion(beam.rct.center))
-                        bombs[i] = None #ボムが消える
-                        beams.pop(k) #ビームも消える
-                        score.add()
-                        bird.change_img(6,screen)
-                        break
-            else:
-                beams.pop(k) #ビームが画面外で削除
+        # ビームの更新＆当たり判定
+        for beam in beams[:]:  # コピーで回す
+            # まずビームを進める。画面外に出たビームは削除
+            if not beam.update(screen):
+                beams.remove(beam)
+                continue
+
+            # 画面内に残っているビームだけ爆弾との当たり判定
+            for bomb in bombs[:]:
+                if bomb.rct.colliderect(beam.rct):
+                    exlst.append(explosion(beam.rct.center))
+                    bombs.remove(bomb)   # 爆弾削除
+                    beams.remove(beam)   # ビーム削除
+                    score.add()
+                    bird.change_img(6, screen)
+                    break  # このビームは消したので次のビームへ
         
         bombs = [bomb for bomb in bombs if bomb is not None]            
         for  bomb in bombs:
