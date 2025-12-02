@@ -7,6 +7,7 @@ import pygame as pg
 
 WIDTH = 1100  # ゲームウィンドウの幅
 HEIGHT = 650  # ゲームウィンドウの高さ
+NUM_OF_BOMBS = 5
 os.chdir(os.path.dirname(os.path.abspath(__file__)))
 
 
@@ -127,6 +128,8 @@ class Bomb:
         self.rct = self.img.get_rect()
         self.rct.center = random.randint(0, WIDTH), random.randint(0, HEIGHT)
         self.vx, self.vy = +5, +5
+        
+
 
     def update(self, screen: pg.Surface):
         """
@@ -167,10 +170,11 @@ class Score:
 
 def main():
     pg.display.set_caption("たたかえ！こうかとん")
-    screen = pg.display.set_mode((WIDTH, HEIGHT))    
+    screen = pg.display.set_mode((WIDTH, HEIGHT))  
     bg_img = pg.image.load("fig/pg_bg.jpg")
     bird = Bird((300, 200))
-    bomb = Bomb((255, 0, 0), 10)
+    #bomb = Bomb((255, 0, 0), 10)
+    bombs = [Bomb((255, 0, 0), 10) for k in range(NUM_OF_BOMBS)]
     beam = None  # ゲーム初期化時にはビームは存在しない
     score = Score() #Scoreインスタンスの生成
     #explosions:list[Explosion] = []
@@ -185,29 +189,33 @@ def main():
                 beam = Beam(bird)            
         screen.blit(bg_img, [0, 0])
         
-        
-        if bird.rct.colliderect(bomb.rct):
-            # ゲームオーバー時に，こうかとん画像を切り替え，1秒間表示させる
-            bird.change_img(8, screen)
-            pg.display.update()
-            time.sleep(1)
-            return
+        for bomb in bombs:
+            if bird.rct.colliderect(bomb.rct):
+                # ゲームオーバー時に，こうかとん画像を切り替え，1秒間表示させる
+                bird.change_img(8, screen)
+                pg.display.update()
+                time.sleep(1)
+                return
 
         key_lst = pg.key.get_pressed()
         bird.update(key_lst, screen)
+        
         if beam is not None:
             beam.update(screen)
-        
-        if bomb is not None: #ボム破壊
-            if beam is not None:
-                if beam.rct.colliderect(bomb.rct):
-                    bomb = None
+            for i, bomb in enumerate(bombs):
+                if bomb.rct.colliderect(beam.rct):
+                    bombs[i] = None
                     score.add()
                     bird.change_img(6,screen)
-                    #bombs = [Bomb((255, 0, 0), 10) for _ in range(NUM_OF_BOMBS)]
-
+                    break
+        
+        bombs = [bomb for bomb in bombs if bomb is not None]            
+        
+        for  bomb in bombs:
+            bomb.update(screen)
+        
         score.update(screen)
-        bomb.update(screen)
+        
         pg.display.update()
         tmr += 1
         clock.tick(50)
