@@ -181,7 +181,10 @@ def main():
     bird = Bird((300, 200))
     #bomb = Bomb((255, 0, 0), 10)
     bombs = [Bomb((255, 0, 0), 10) for k in range(NUM_OF_BOMBS)]
-    beam = None  # ゲーム初期化時にはビームは存在しない
+    #beam = None  # ゲーム初期化時にはビームは存在しない
+    
+    beams = [] #beamの空のリスト
+
     score = Score() #Scoreインスタンスの生成
     #explosions:list[Explosion] = []
     clock = pg.time.Clock()
@@ -192,39 +195,35 @@ def main():
                 return
             if event.type == pg.KEYDOWN and event.key == pg.K_SPACE:
                 # スペースキー押下でBeamクラスのインスタンス生成
-                beam = Beam(bird)            
+                beams.append(Beam(bird)) #ビームをアペンド       
         screen.blit(bg_img, [0, 0])
         
-<<<<<<< HEAD
-        
-        if bird.rct.colliderect(bomb.rct):
-            # ゲームオーバー時に，こうかとん画像を切り替え，1秒間表示させる
-            bird.change_img(8, screen)
-            bird.gameover(screen)
-            pg.display.update()
-            time.sleep(1)
-            return
-=======
         for bomb in bombs:
             if bird.rct.colliderect(bomb.rct):
                 # ゲームオーバー時に，こうかとん画像を切り替え，1秒間表示させる
                 bird.change_img(8, screen)
+                bird.gameover(screen)
                 pg.display.update()
                 time.sleep(1)
                 return
->>>>>>> bomb
 
         key_lst = pg.key.get_pressed()
         bird.update(key_lst, screen)
-        
-        if beam is not None:
-            beam.update(screen)
-            for i, bomb in enumerate(bombs):
-                if bomb.rct.colliderect(beam.rct):
-                    bombs[i] = None
-                    score.add()
-                    bird.change_img(6,screen)
-                    break
+        for k, beam in enumerate(beams):
+            if beam is not screen: 
+                beam.update(screen)
+                for i, bomb in enumerate(bombs): 
+                    if bomb is None:
+                        continue
+                    if bomb.rct.colliderect(beam.rct): #ボムがビームとぶつかったら
+                        bombs[i] = None #ボムが消える
+                        beam = None
+                        beams.pop(k) #ビームも消える
+                        score.add()
+                        bird.change_img(6,screen)
+                        break
+            else:
+                beams.pop(k) #ビームが画面外で削除
         
         bombs = [bomb for bomb in bombs if bomb is not None]            
         
