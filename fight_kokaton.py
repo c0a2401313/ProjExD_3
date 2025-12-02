@@ -82,6 +82,11 @@ class Bird:
         if not (sum_mv[0] == 0 and sum_mv[1] == 0):
             self.img = __class__.imgs[tuple(sum_mv)]
         screen.blit(self.img, self.rct)
+    
+    def gameover(self,screen: pg.Surface):
+        fonto = pg.font.Font(None,80)
+        txt = fonto.render("Game Over", True,(255, 0, 0))
+        screen.blit(txt, [WIDTH//2-150, HEIGHT//2])
 
 
 
@@ -140,7 +145,7 @@ class Bomb:
             self.vy *= -1
         self.rct.move_ip(self.vx, self.vy)
         screen.blit(self.img, self.rct)
-
+    
 
 class Score:
     """
@@ -161,6 +166,7 @@ class Score:
         
         self.img = self.fonto.render(f"Score:{self.value}",True,self.color)
         screen.blit(self.img,self.rct)
+
 
 
 
@@ -189,6 +195,7 @@ def main():
         if bird.rct.colliderect(bomb.rct):
             # ゲームオーバー時に，こうかとん画像を切り替え，1秒間表示させる
             bird.change_img(8, screen)
+            bird.gameover(screen)
             pg.display.update()
             time.sleep(1)
             return
