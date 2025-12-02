@@ -140,6 +140,29 @@ class Bomb:
         screen.blit(self.img, self.rct)
 
 
+class Score:
+    """
+    スコア表示クラス
+    """
+    def __init__(self):
+        self.fonto = pg.font.SysFont("hgp創英角ﾎﾟｯﾌﾟ体", 30)
+        self.color = (0, 0, 255)
+        self.value = 0
+        self.img = self.fonto.render(f"Score;{self.value}", 0 ,self.color)
+        self.rct = self.img.get_rect()
+        self.rct.center = (100,HEIGHT -50)
+
+    def add(self):
+        self.value += 1
+
+    def update(self,screen:pg.Surface):
+        
+        self.img = self.fonto.render(f"Score:{self.value}",True,self.color)
+        screen.blit(self.img,self.rct)
+
+
+
+
 def main():
     pg.display.set_caption("たたかえ！こうかとん")
     screen = pg.display.set_mode((WIDTH, HEIGHT))    
@@ -147,6 +170,8 @@ def main():
     bird = Bird((300, 200))
     bomb = Bomb((255, 0, 0), 10)
     beam = None  # ゲーム初期化時にはビームは存在しない
+    score = Score() #Scoreインスタンスの生成
+    #explosions:list[Explosion] = []
     clock = pg.time.Clock()
     tmr = 0
     while True:
@@ -157,6 +182,7 @@ def main():
                 # スペースキー押下でBeamクラスのインスタンス生成
                 beam = Beam(bird)            
         screen.blit(bg_img, [0, 0])
+        
         
         if bird.rct.colliderect(bomb.rct):
             # ゲームオーバー時に，こうかとん画像を切り替え，1秒間表示させる
@@ -170,11 +196,14 @@ def main():
         if beam is not None:
             beam.update(screen)
         
-        if bomb is not None:
+        if bomb is not None: #ボム破壊
             if beam is not None:
                 if beam.rct.colliderect(bomb.rct):
                     bomb = None
-        
+                    score.add()
+                    #bombs = [Bomb((255, 0, 0), 10) for _ in range(NUM_OF_BOMBS)]
+
+        score.update(screen)
         bomb.update(screen)
         pg.display.update()
         tmr += 1
